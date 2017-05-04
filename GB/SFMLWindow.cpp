@@ -15,11 +15,11 @@ SFMLWindow::SFMLWindow(JOYP *joyp) {
 void SFMLWindow::putImage(int width, int height, char* data) {
   m_window.clear();
 
-  if (m_frame_count == 10) {
+  if (m_frame_count == 5) {
     sf::Time elapsedTime = m_clock.getElapsedTime();
-    sf::Time expected = sf::microseconds(166666);
+    sf::Time expected = sf::microseconds(16666*5);
     if (elapsedTime < expected) {
-      //sf::sleep(expected - elapsedTime);
+      sf::sleep(expected - elapsedTime);
     }
     else {
       std::cout << "late frames" << std::endl;

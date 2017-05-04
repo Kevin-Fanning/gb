@@ -21,7 +21,7 @@ namespace gb {
       m_size = 1;
 
       /* Open an audio I/O stream. */
-      PaError err = Pa_OpenDefaultStream(&m_stream, 0, 2,
+      PaError err = Pa_OpenDefaultStream(&m_stream, 0, 1,
         paFloat32,
         SAMPLE_RATE,
         256,
@@ -33,7 +33,7 @@ namespace gb {
     }
 
     void setWaveform(int frequency, int volume, float duty, WAVEFORMS waveform) {
-      float amplitude = volume / 1.0f;
+      float amplitude = volume / 100.0f;
       if (waveform == WAVEFORMS::SQUARE) {
         int samplesPerCycle = (SAMPLE_RATE) / frequency;
         for (int i = 0; i < samplesPerCycle; i++) {
@@ -46,6 +46,10 @@ namespace gb {
           m_buffer[i] = rand() * amplitude;
         }
         m_size = SAMPLE_RATE;
+      }
+      if (frequency != m_lastFrequency) {
+        m_cycleOffset = 0;
+        m_lastFrequency = frequency;
       }
     }
 
@@ -85,6 +89,7 @@ namespace gb {
   private:
     float *m_buffer = nullptr;
     int m_size = 0;
+    int m_lastFrequency = 0;
     unsigned int m_cycleOffset = 0;
     PaStream *m_stream;
   };
@@ -99,11 +104,13 @@ namespace gb {
     float *out = (float*)outputBuffer;
     unsigned int i;
     (void)inputBuffer; /* Prevent unused variable warning. */
-
+    int j = data->m_cycleOffset;
     for (i = 0; i < framesPerBuffer; i++)
     {
-      out[i] = data->m_buffer[i];
+      out[i] = data->m_buffer[j % data->m_size];
+      j++;
     }
+    data->m_cycleOffset = j % data->m_size;
     return 0;
   }
 

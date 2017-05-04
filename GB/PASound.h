@@ -35,6 +35,12 @@ namespace gb {
     }
 
     void setChannel(int channel, int frequency, int volume, float duty, WAVEFORMS waveform) {
+      if (channel < m_numChannels) {
+        m_channels[channel].setWaveform(frequency, volume, duty, waveform);
+      }
+      else {
+        std::cout << "channel index out of range" << std::endl;
+      }
     }
 
     void play(unsigned int channel) {

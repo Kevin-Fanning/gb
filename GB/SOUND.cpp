@@ -124,11 +124,11 @@ void SOUND::recalculate(int channel) {
         break;
       }
       int volume = (m_ch2_volume / 15.0) * 100;
-      //m_soundDriver->setChannel(1, frequency, volume, duty, WAVEFORMS::SQUARE);
-      //m_soundDriver->play(1);
+      m_soundDriver->setChannel(1, frequency, volume, duty, WAVEFORMS::SQUARE);
+      m_soundDriver->play(1);
     }
     else {
-      //m_soundDriver->stop(1);
+      m_soundDriver->stop(1);
     }
   }
 }

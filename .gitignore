@@ -1,0 +1,11 @@
+GB.sdf
+GB.v12.suo
+GB.VC.opendb
+*.dll
+**/*.dll
+*.gb
+.vs/**/*
+Release/**/*
+Debug/**/*
+GB/Debug/*
+GB/Debug/**/*

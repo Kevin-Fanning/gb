@@ -46,21 +46,6 @@ int main(char** args) {
 
   mmu.setRom((unsigned char*)&buffer.front(), buffer.size());
 
-  int mode = 0;
-
-  while (false && window.isOpen()) {
-    window.pollEvents();
-    if (mode == 0) {
-    }
-    else if (mode == 1) {
-    }
-    else if (mode == 2) {
-    }
-    else if (mode == 3) {
-    }
-    mode = (mode + 1) & 0x3;
-  }
-
   while (window.isOpen()) {
     window.pollEvents();
     cpu.execute();
