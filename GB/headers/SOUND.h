@@ -33,6 +33,9 @@ namespace gb {
     int m_ch2_envelope_counter = 0;
     int m_ch4_envelope_counter = 0;
 
+    // sweep internal registers
+    int m_ch1_sweep_counter = 0;
+
     // Channel 1 - square with sweep and envelope
     int m_ch1_sweepAmount = 0;
     int m_ch1_sweepTime = 0;

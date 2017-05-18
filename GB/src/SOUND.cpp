@@ -24,6 +24,25 @@ void SOUND::tick(int mClocks) {
     recalculate(2);
   }
 
+  if (m_sweep_clocks >= 8192) {
+    m_sweep_clocks -= 8192;
+    m_ch1_sweep_counter++;
+    if (m_channel_1_enabled && m_ch1_sweepAmount && m_ch1_sweep_counter == m_ch1_sweepTime) {
+      int amount = m_ch1_frequency >> m_ch1_sweepAmount;
+      if (m_ch1_sweepSubtraction) {
+        amount = -amount;
+      }
+      m_ch1_frequency += amount;
+      if (m_ch1_frequency > 2047) {
+        m_ch1_frequency &= 2047;
+        m_channel_1_enabled = false;
+        m_ch1_initialFlag = false;
+      }
+      recalculate(1);
+      m_ch1_sweep_counter = 0;
+    }
+  }
+
   if (m_envelope_clocks > 16384) {
     m_envelope_clocks -= 16384;
     m_ch1_envelope_counter++;
@@ -140,6 +159,7 @@ void SOUND::writeByte(int addr, char byte) {
     m_ch1_sweepAmount = byte & 0b11;
     m_ch1_sweepSubtraction = (byte & 0b100) >> 2;
     m_ch1_sweepTime = (byte & 0b1110000) >> 4;
+    m_ch1_sweep_counter = 0;
     break;
   case 0xFF11:
     m_ch1_length = byte & 0b00111111;

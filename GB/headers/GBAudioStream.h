@@ -53,6 +53,9 @@ namespace gb {
     }
 
     void play() {
+      // enable output
+      m_enabled = true;
+      // start stream if stopped
       PaError err = Pa_IsStreamStopped(m_stream);
       if (err == 1) {
         err = Pa_StartStream(m_stream);
@@ -66,9 +69,17 @@ namespace gb {
     }
 
     void stop() {
+      m_enabled = false;
+    }
+
+    void cleanup() {
       PaError err = Pa_IsStreamActive(m_stream);
       if (err == 1) {
         err = Pa_StopStream(m_stream);
+        if (err != paNoError) {
+          std::cout << Pa_GetErrorText(err) << std::endl;
+        }
+        PaError err = Pa_CloseStream(m_stream);
         if (err != paNoError) {
           std::cout << Pa_GetErrorText(err) << std::endl;
         }
@@ -78,18 +89,12 @@ namespace gb {
       }
     }
 
-    void cleanup() {
-      PaError err = Pa_CloseStream(m_stream);
-      if (err != paNoError) {
-        std::cout << Pa_GetErrorText(err) << std::endl;
-      }
-    }
-
   private:
     float *m_buffer = nullptr;
     int m_size = 0;
     int m_lastFrequency = 0;
     float m_cycleOffset = 0;
+    bool m_enabled = false;
     PaStream *m_stream;
   };
 
@@ -108,8 +113,13 @@ namespace gb {
     int j = (int)(offset * data->m_size);
     for (i = 0; i < framesPerBuffer; i++)
     {
-      out[i] = data->m_buffer[j % data->m_size];
-      j++;
+      if (data->m_enabled) {
+        out[i] = data->m_buffer[j % data->m_size];
+        j++;
+      }
+      else {
+        out[i] = 0;
+      }
     }
     data->m_cycleOffset = (float)j / data->m_size;
     return 0;
