@@ -48,7 +48,6 @@ namespace gb {
         m_size = SAMPLE_RATE;
       }
       if (frequency != m_lastFrequency) {
-        m_cycleOffset = 0;
         m_lastFrequency = frequency;
       }
     }
@@ -90,7 +89,7 @@ namespace gb {
     float *m_buffer = nullptr;
     int m_size = 0;
     int m_lastFrequency = 0;
-    unsigned int m_cycleOffset = 0;
+    float m_cycleOffset = 0;
     PaStream *m_stream;
   };
 
@@ -104,13 +103,15 @@ namespace gb {
     float *out = (float*)outputBuffer;
     unsigned int i;
     (void)inputBuffer; /* Prevent unused variable warning. */
-    int j = data->m_cycleOffset;
+
+    float offset = data->m_cycleOffset;
+    int j = (int)(offset * data->m_size);
     for (i = 0; i < framesPerBuffer; i++)
     {
       out[i] = data->m_buffer[j % data->m_size];
       j++;
     }
-    data->m_cycleOffset = j % data->m_size;
+    data->m_cycleOffset = (float)j / data->m_size;
     return 0;
   }
 
