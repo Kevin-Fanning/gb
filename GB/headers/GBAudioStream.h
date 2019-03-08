@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <iostream>
-#include <SFML/Audio.hpp>
+#include <random>
 
 #define SAMPLE_RATE (44100)
 
@@ -41,14 +41,32 @@ namespace gb {
         }
         m_size = samplesPerCycle;
       }
-      else if (false && waveform == WAVEFORMS::WHITE_NOISE) {
-        for (int i = 0; i < SAMPLE_RATE; i++) {
-          m_buffer[i] = rand() * amplitude;
+      else if (waveform == WAVEFORMS::WHITE_NOISE) {
+        float amplitude = volume / 100.0f;
+        int seed = m_random_distribution(m_random_generator);
+        int last = seed & 0x1;
+        int samplesPerFlip = SAMPLE_RATE / (frequency);
+        for (int i = 0; i < 1000; i++) {
+          if (false && (samplesPerFlip == 0 || i % samplesPerFlip == 0)) {
+            int x = seed & 0x1;
+            int y = seed & 0x2;
+            int next = x ^ y;
+            seed = seed >> 1;
+            if (next) {
+              seed |= 1 << 15;
+            }
+            else {
+              seed &= 0 << 15;
+            }
+            int last = seed & 0x1;
+            last = rand() % 1;
+            m_buffer[i] = last * amplitude;
+          }
+          else {
+            m_buffer[i] = (rand()%2) * amplitude;
+          }
         }
-        m_size = SAMPLE_RATE;
-      }
-      if (frequency != m_lastFrequency) {
-        m_lastFrequency = frequency;
+        m_size = 1000;
       }
     }
 
@@ -92,10 +110,11 @@ namespace gb {
   private:
     float *m_buffer = nullptr;
     int m_size = 0;
-    int m_lastFrequency = 0;
     float m_cycleOffset = 0;
     bool m_enabled = false;
     PaStream *m_stream;
+    std::default_random_engine m_random_generator;
+    std::uniform_int_distribution<int> m_random_distribution = std::uniform_int_distribution<int>(0, 0xFFFF);
   };
 
   int gbAudioCallback(const void *inputBuffer, void *outputBuffer,
@@ -113,7 +132,7 @@ namespace gb {
     int j = (int)(offset * data->m_size);
     for (i = 0; i < framesPerBuffer; i++)
     {
-      if (data->m_enabled) {
+      if (data->m_enabled && data->m_size > 0) {
         out[i] = data->m_buffer[j % data->m_size];
         j++;
       }

@@ -23,6 +23,10 @@ void SOUND::tick(int mClocks) {
     m_channel_2_enabled = true;
     recalculate(2);
   }
+  if (!m_channel_4_enabled & m_ch4_initialFlag) {
+    m_channel_4_enabled = true;
+    recalculate(4);
+  }
 
   if (m_sweep_clocks >= 8192) {
     m_sweep_clocks -= 8192;
@@ -70,6 +74,17 @@ void SOUND::tick(int mClocks) {
       }
       m_ch2_envelope_counter = 0;
     }
+    if (m_ch4_envelopeAmount != 0 && m_channel_4_enabled && m_ch4_envelopeAmount == m_ch4_envelope_counter) {
+      if (m_ch4_envelopeDown && m_ch4_volume < 15) {
+        m_ch4_volume++;
+        recalculate(4);
+      }
+      else if (!m_ch4_envelopeDown && m_ch4_volume > 0) {
+        m_ch4_volume--;
+        recalculate(4);
+      }
+      m_ch4_envelope_counter = 0;
+    }
   }
 
   if (m_length_clocks >= 4096) {
@@ -78,19 +93,31 @@ void SOUND::tick(int mClocks) {
     if (m_ch1_counter) {
       if (m_ch1_length > 0) {
         m_ch1_length--;
-        if (m_ch1_length == 0) {
-          m_channel_1_enabled = false;
-        }
+      }
+      if (m_ch1_length == 0) {
+        m_channel_1_enabled = false;
+        m_ch1_initialFlag = false;
         recalculate(1);
       }
     }
     if (m_ch2_counter) {
       if (m_ch2_length > 0) {
         m_ch2_length--;
-        if (m_ch2_length == 0) {
-          m_channel_2_enabled = false;
-        }
+      }
+      if (m_ch2_length == 0) {
+        m_channel_2_enabled = false;
+        m_ch2_initialFlag = false;
         recalculate(2);
+      }
+    }
+    if (m_ch4_counter) {
+      if (m_ch4_length > 0) {
+        m_ch4_length--;
+      }
+      if (m_ch4_length == 0) {
+        m_channel_4_enabled = false;
+        m_ch4_initialFlag = false;
+        recalculate(4);
       }
     }
   }
@@ -148,6 +175,22 @@ void SOUND::recalculate(int channel) {
     }
     else {
       m_soundDriver->stop(1);
+    }
+  }
+  else if (channel == 4) {
+    if (m_master_sound_enabled && m_channel_4_enabled) {
+      // 524288 Hz / r / 2^(s+1)
+      float divide = m_ch4_frequencyDividingRatio;
+      if (divide == 0) {
+        divide = 0.5;
+      }
+      int frequency = (int)(524288 / divide) >> (m_ch4_polynomialShiftClockFrequency + 1);
+      int volume = (m_ch4_volume / 15.0) * 100;
+      m_soundDriver->setChannel(3, frequency, volume, 0, WAVEFORMS::WHITE_NOISE);
+      m_soundDriver->play(3);
+    }
+    else {
+      m_soundDriver->stop(3);
     }
   }
 }
@@ -266,6 +309,12 @@ void SOUND::writeByte(int addr, char byte) {
   case 0xFF23:
     m_ch4_counter = (byte >> 6) & 0x1;
     m_ch4_initialFlag = (byte >> 7) & 0x1;
+    if (m_ch4_initialFlag) {
+      m_channel_4_enabled = true;
+      if (m_ch4_length == 0) m_ch4_length = 64;
+      m_ch4_volume = m_ch4_initialEnvelope;
+      m_ch4_envelope_counter = 0;
+    }
     recalculate(4);
     break;
 
